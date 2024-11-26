@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Canteen Bill </title>
+  <!-- Bootstrap CSS for styling -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+
+  <style>
+    body {
+      padding: 20px;
+    
+    
+    }
+
+    .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+    }
+
+    .bill-summary,
+    .saved-bills {
+      margin-top: 30px;
+    }
+
+    .item-list {
+      margin-top: 20px;
+    }
+
+    #qr-code {
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
+
+    #payment-message {
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+    }
+
+    .remove-btn {
+      cursor: pointer;
+      color: white;
+      background-color: red;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .remove-btn:hover {
+      background-color: darkred;
+    }
+
+    .item-card {
+      margin-bottom: 10px;
+    }
+
+    .card-header {
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+
+    .card-body {
+      font-size: 1em;
+    }
+
+    .saved-bills ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .saved-bills li {
+      background-color: #f8f9fa;
+      margin-bottom: 10px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .bill-card {
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #f7f7f7;
+      margin-bottom: 15px;
+    }
+
+    .card-header {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 767px) {
+      .form-container {
+        width: 100%;
+        padding: 15px;
+      }
+      .saved-bills {
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <!-- Form Container -->
+    <div class="form-container">
+      <h3 class="text-center">IICT Departmental Canteen </h3>
+
+      <form id="canteen-form">
+        <div class="form-group">
+          <label for="item">Select Item</label>
+          <select class="form-control" id="item" required>
+            <option value="" disabled selected>Select an item</option>
+            <option value="chapati">Chapati - 2 Rs</option>
+            <option value="Fry curry">Fry Curry - 6 Rs</option>
+            <option value="Tea">Tea - 5 Rs</option>
+            <option value="Coffee">Coffee - 15 Rs</option>
+            <option value="Papad-multi">Papad-multi - 4 Rs</option>
+            <option value="Papad-single">Papad-single - 1 Rs</option>
+            <option value="Daal">Daal - 6 Rs</option>
+            <option value="Sweet">Sweet - 7 Rs</option>
+            <option value="Rice">Rice - 5 Rs</option>
+            <option value="Chicken curry">Chicken curry - 30 Rs</option>
+            <option value="Mutton curry">Mutton curry - 50 Rs</option>
+            <option value="Rasam">Rasam - 1 Rs</option>
+            <option value="Curd">Curd - 5 Rs</option>
+            <option value="Sugar">Sugar - 1 Rs</option>
+            <option value="Sambar">Sambar - 3 Rs</option>
+            <option value="Pickle">Pickle - 2 Rs</option>
+            <option value="Snack at lunch">Snack at lunch - 5 Rs</option>
+            <option value="Egg Curry">Egg Curry- 15 Rs</option>
+            <option value="Chicken 65">Chicken 65 - 35 Rs</option>
+            <option value="Boiled Egg">Boiled Egg - 6 Rs</option>
+            <option value="Veg Briyani">Veg Briyani - 30 Rs</option>
+            <option value="Chicken Briyani">Chicken Briyani- 100 Rs</option>
+            <option value="Mutton Briyani">Mutton Briyani - 150 Rs</option>
+            <option value="Fish">Fish - 30 Rs</option>
+            <option value="Chicken fried rice">Chicken fried rice - 35 Rs</option>
+            <option value="Egg Briyani">Egg Briyani - 30 Rs</option>
+            <option value="Fried rice">Fried rice - 30 Rs</option>
+            <option value="lemon Rice">lemon Rice - 15 Rs</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">Enter Quantity</label>
+          <input type="number" class="form-control" id="quantity" min="1" value="1" required>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block" onclick="addItem()">Add Item</button>
+      </form>
+
+      <div class="item-list" id="item-list">
+        <h4>Added Items:</h4>
+        <ul id="added-items" class="list-group"></ul>
+      </div>
+
+      <div class="bill-summary" id="bill-summary" style="display: none;">
+        <h4>Bill Summary</h4>
+        <p><strong>Subtotal:</strong> Rs <span id="bill-subtotal"></span></p>
+        <p><strong>Total:</strong> Rs <span id="bill-total"></span></p>
+        <button type="button" class="btn btn-success btn-block" onclick="generateQRCode()">Pay Now</button>
+      </div>
+
+      <!-- QR Code will appear here -->
+      <div id="qr-code">
+        <img id="qr-image" alt="QR Code" />
+      </div>
+
+      <div id="payment-message" style="display: none;">
+        <!-- <p class="text-success">Payment Successful! Thank you for your purchase.</p> -->
+        <button class="btn btn-primary btn-block" onclick="resetForm()">Generate New Bill</button>
+      </div>
+    </div>
+
+    <!-- Saved Bills Section -->
+    <div class="saved-bills">
+      <h4>Previous Bills</h4>
+      <ul id="saved-bills-list"></ul>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS & jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+    // Prices of the items in Rs
+    const itemsData = {
+      'chapati': 2,
+      'Fry curry': 6,
+      'Tea': 5,
+      'Coffee': 15,
+      'Papad-multi': 4,
+      'Papad-single': 1,
+      'Daal': 6,
+      'Sweet': 7,
+      'Rice': 5,
+      'Chicken curry': 30,
+      'Mutton curry': 50,
+      'Rasam': 1,
+      'Curd': 5,
+      'Sambar': 3,
+      'Sugar': 1,
+      'Pickle': 2,
+      'Snack at lunch': 5,
+      'Egg Curry': 15,
+      'Chicken 65': 35,
+      'Boiled Egg': 6,
+      'Veg Briyani': 30,
+      'Chicken Briyani': 100,
+      'Mutton Briyani': 150,
+      'Fish': 30,
+      'Egg Briyani': 30,
+      'Chicken fried rice': 35,
+      'lemon Rice': 15,
+      'Fried rice': 30
+
+
+    };
+
+    let itemsList = [];
+    let savedBills = [];
+
+    // Add item to the list and update the bill
+    function addItem() {
+      const itemElement = document.getElementById('item');
+      const quantityElement = document.getElementById('quantity');
+      const item = itemElement.value;
+      const quantity = parseInt(quantityElement.value);
+
+      if (!item) {
+        alert('Please select an item.');
+        return;
+      }
+
+      if (quantity < 1) {
+        alert('Please enter a valid quantity.');
+        return;
+      }
+
+      const price = itemsData[item];
+      const itemTotal = price * quantity;
+
+      // Add the item to the items list
+      const existingItem = itemsList.find(i => i.item === item);
+      if (existingItem) {
+        existingItem.quantity += quantity;
+        existingItem.itemTotal = existingItem.quantity * price; // Recalculate total for this item
+      } else {
+        itemsList.push({ item, quantity, price, itemTotal });
+      }
+
+      // Update the item list UI
+      updateItemList();
+
+      // Clear the form inputs
+      itemElement.value = '';
+      quantityElement.value = 1;
+
+      // Recalculate the total bill
+      updateBill();
+    }
+
+    // Update the displayed item list in the UI
+    function updateItemList() {
+      const addedItemsList = document.getElementById('added-items');
+      addedItemsList.innerHTML = ''; // Clear current list
+
+      itemsList.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+        listItem.innerHTML = `${item.item} x${item.quantity} - Rs ${item.itemTotal.toFixed(2)}`;
+
+        const removeButton = document.createElement('span');
+        removeButton.classList.add('remove-btn');
+        removeButton.textContent = 'Remove';
+        removeButton.onclick = () => removeItem(item);
+
+        listItem.appendChild(removeButton);
+        addedItemsList.appendChild(listItem);
+      });
+    }
+
+    // Remove item from the list
+    function removeItem(itemToRemove) {
+      itemsList = itemsList.filter(item => item !== itemToRemove);
+      updateItemList();
+      updateBill();
+    }
+
+    // Update the bill (subtotal, total)
+    function updateBill() {
+      const subtotal = itemsList.reduce((sum, item) => sum + item.itemTotal, 0);
+      document.getElementById('bill-subtotal').innerText = subtotal.toFixed(2);
+      document.getElementById('bill-total').innerText = subtotal.toFixed(2);
+
+      // Show the bill summary if there are any items
+      document.getElementById('bill-summary').style.display = itemsList.length > 0 ? 'block' : 'none';
+    }
+
+    // Generate QR Code and show the payment message
+    function generateQRCode() {
+      const totalAmount = parseFloat(document.getElementById('bill-total').innerText);
+
+      // Your UPI ID (replace with your actual UPI ID)
+      const upiId = '52191010581@sbi';  // Example: 'example@upi'
+
+      // UPI payment link (dynamically adding the amount to the link)
+      const upiLink = `upi://pay?pa=${upiId}&pn=IICTCanteen&mc=XXXX&tid=432184764156&tt=${totalAmount}`;
+
+      // Generate QR code for the UPI link
+      const qrCodeContainer = document.getElementById('qr-code');
+      const qrImageElement = document.getElementById('qr-image');
+
+      QRCode.toDataURL(upiLink, function (error, url) {
+        if (error) {
+          console.error('Error generating QR Code: ', error);
+          return;
+        }
+
+        qrImageElement.src = url;
+        qrCodeContainer.style.display = 'block';
+      });
+
+      // Save the bill to the savedBills array
+      savedBills.push({
+        items: [...itemsList],  // Make a copy of items
+        total: totalAmount
+      });
+
+      // Display saved bills
+      displaySavedBills();
+
+      // Hide the bill summary and show QR code
+      document.getElementById('bill-summary').style.display = 'none';
+
+      // Simulate payment success after a short delay
+      setTimeout(function () {
+        document.getElementById('payment-message').style.display = 'block';
+      }, 2000);
+    }
+
+    // Display saved bills in the saved bills list
+    function displaySavedBills() {
+      const savedBillsList = document.getElementById('saved-bills-list');
+      savedBillsList.innerHTML = '';  // Clear existing saved bills
+
+      savedBills.forEach((bill, index) => {
+        const listItem = document.createElement('li');
+        listItem.classList.add('list-group-item');
+        listItem.innerHTML = `
+          <strong>Bill ${index + 1}</strong><br>
+          Items: ${bill.items.map(i => `${i.item} x${i.quantity}`).join(', ')}<br>
+          Total: Rs ${bill.total.toFixed(2)}
+        `;
+        savedBillsList.appendChild(listItem);
+      });
+    }
+
+    // Reset the form and clear the bill
+    function resetForm() {
+      itemsList = [];
+      document.getElementById('added-items').innerHTML = '';
+      document.getElementById('bill-summary').style.display = 'none';
+      document.getElementById('payment-message').style.display = 'none';
+      document.getElementById('canteen-form').reset();
+    }
+  </script>
+
+</body>
+
+</html>
